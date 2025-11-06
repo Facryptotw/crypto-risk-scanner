@@ -1,5 +1,5 @@
 """
-加密貨幣風險分析工具 - Flask 後端
+加密貨幣風險分析工具 - Flask 後端（高速率限制版本）
 支援多鏈代幣的風險評估
 """
 
@@ -15,11 +15,11 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# 速率限制 - 防止濫用
+# 速率限制 - 大幅提高但仍有保護
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"],
+    default_limits=["2000 per day", "300 per hour"],  # 大幅提高
     storage_uri="memory://"
 )
 
@@ -389,7 +389,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/api/analyze', methods=['POST'])
-@limiter.limit("10 per minute")  # 每分鐘最多 10 次請求
+@limiter.limit("50 per minute")  # 每分鐘 50 次（提高 5 倍）
 def analyze():
     """分析 API 端點"""
     data = request.json
@@ -415,7 +415,7 @@ if __name__ == '__main__':
     print(f"📊 運行在端口: {port}")
     print(f"🌍 模式: {'開發' if debug else '生產'}")
     print("✅ API Keys 已配置 (Moralis + Helius)")
-    print("⚠️  速率限制: 每分鐘 10 次，每小時 50 次，每天 200 次")
+    print("⚠️  速率限制: 每分鐘 50 次，每小時 300 次，每天 2000 次")
     print("")
     
     app.run(debug=debug, host='0.0.0.0', port=port)
