@@ -1,6 +1,6 @@
 """
-加密貨幣風險分析工具 - Flask 後端（高速率限制版本）
-支援多鏈代幣的風險評估
+加密貨幣風險分析工具 - Flask 後端（改進版：智能識別流動性池）
+支援多鏈代幣的風險評估，自動排除LP池計算真實集中度
 """
 
 from flask import Flask, render_template, request, jsonify
@@ -19,12 +19,11 @@ CORS(app)
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
-    default_limits=["2000 per day", "300 per hour"],  # 大幅提高
+    default_limits=["2000 per day", "300 per hour"],
     storage_uri="memory://"
 )
 
 # ====== API KEYS ======
-# 從環境變量讀取 API keys（生產環境）或使用默認值（開發環境）
 BIRDEYE_API_KEY = os.getenv("BIRDEYE_API_KEY", "271ceeebc0a94dd9acfd11270f7984ca")
 MORALIS_API_KEY = os.getenv("MORALIS_API_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6ImUyYzA4Y2NiLTYwMjYtNGYyMy05NjAxLWE1YmZkZjY3NTc5ZiIsIm9yZ0lkIjoiNDc5NzU1IiwidXNlcklkIjoiNDkzNTY2IiwidHlwZUlkIjoiMGFjOWRiMGItNzliYi00Y2JjLTkyMGYtMzg2N2E1ODhhOWU0IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NjIzODk1NTMsImV4cCI6NDkxODE0OTU1M30.J0rM0hxabvWMoaeQCncbOe_0j5cL4cqzilnImf_VZLc")
 HELIUS_API_KEY = os.getenv("HELIUS_API_KEY", "aa75a2a5-8c15-4ec9-a257-bc15176b7ff8")
@@ -38,6 +37,20 @@ CHAIN_MAP = {
     "optimism": {"ds": "optimism", "be": "optimism", "mo": "optimism"},
     "avalanche":{"ds": "avalanche","be": "avalanche","mo": "avalanche"},
     "solana":   {"ds": "solana",   "be": "solana",   "mo": None},
+}
+
+# Solana 已知 DEX 程序 ID
+KNOWN_DEX_PROGRAMS = {
+    "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8": "Raydium AMM",
+    "9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP": "Orca",
+    "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc": "Orca Whirlpool",
+    "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK": "Raydium CLMM",
+    "Dooar9JkhdZ7J3LHN3A7YCuoGRUggXhQaG4kijfLGU2j": "Raydium CPMM",
+}
+
+# 已知鎖倉/質押程序
+KNOWN_LOCK_PROGRAMS = {
+    "CChTq6PthWU82YZkbveA3WDf7s97BWhBK4Vx9bmsT743": "Team Finance Lock",
 }
 
 def risk_judgement(daily_trading_value_change: float,
@@ -167,15 +180,86 @@ async def fetch_volume_change_pct(chain_ds: str, pair_address: str) -> float | N
                     return (float(vol_h24) - est_prev24) / est_prev24 * 100.0
     return None
 
+async def classify_solana_holder(account_address: str, client: httpx.AsyncClient):
+    """
+    識別 Solana 賬戶類型
+    返回: {"type": "liquidity_pool" | "lock_contract" | "wallet" | "unknown", ...}
+    """
+    url = f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
+    
+    account_request = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getAccountInfo",
+        "params": [
+            account_address,
+            {"encoding": "jsonParsed"}
+        ]
+    }
+    
+    try:
+        r = await client.post(url, json=account_request)
+        if r.status_code != 200:
+            return {"type": "unknown", "address": account_address}
+        
+        data = r.json()
+        account_info = data.get("result", {}).get("value")
+        
+        if not account_info:
+            return {"type": "unknown", "address": account_address}
+        
+        owner = account_info.get("owner")
+        
+        # 檢查是否為 DEX 流動性池
+        if owner in KNOWN_DEX_PROGRAMS:
+            return {
+                "type": "liquidity_pool",
+                "address": account_address,
+                "dex": KNOWN_DEX_PROGRAMS[owner],
+                "owner": owner
+            }
+        
+        # 檢查是否為鎖倉合約
+        if owner in KNOWN_LOCK_PROGRAMS:
+            return {
+                "type": "lock_contract",
+                "address": account_address,
+                "program": KNOWN_LOCK_PROGRAMS[owner],
+                "owner": owner
+            }
+        
+        # Token Program 擁有 = 普通錢包或 CEX
+        if owner == "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA":
+            return {
+                "type": "wallet",
+                "address": account_address,
+                "owner": owner
+            }
+        
+        # 其他情況標記為 unknown
+        return {
+            "type": "unknown",
+            "address": account_address,
+            "owner": owner
+        }
+        
+    except Exception as e:
+        print(f"分類賬戶時出錯 {account_address}: {e}")
+        return {"type": "unknown", "address": account_address}
+
 async def fetch_top10_from_helius(token_address: str):
-    """使用 Helius API 獲取 Solana 持幣數據"""
+    """
+    改進版：使用 Helius API 獲取 Solana 持幣數據
+    自動識別並排除流動性池，計算真實集中度
+    """
     if not HELIUS_API_KEY:
         return None
     
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=45) as client:
             url = f"https://mainnet.helius-rpc.com/?api-key={HELIUS_API_KEY}"
             
+            # 1. 獲取總供應量
             supply_request = {
                 "jsonrpc": "2.0",
                 "id": 1,
@@ -195,6 +279,7 @@ async def fetch_top10_from_helius(token_address: str):
             total_supply = int(supply_info["amount"])
             decimals = int(supply_info["decimals"])
             
+            # 2. 獲取最大持幣賬戶
             holders_request = {
                 "jsonrpc": "2.0",
                 "id": 2,
@@ -212,26 +297,100 @@ async def fetch_top10_from_helius(token_address: str):
             
             accounts = holders_data["result"]["value"]
             
-            all_amounts = []
-            for acc in accounts:
-                amt_str = acc.get("amount")
-                if amt_str:
-                    all_amounts.append(int(amt_str))
+            # 3. 分類每個賬戶（取前 20 名進行分析）
+            classified_holders = []
+            for acc in accounts[:20]:
+                address = acc.get("address")
+                amount = int(acc.get("amount", 0))
+                
+                if not address or amount == 0:
+                    continue
+                
+                # 識別賬戶類型
+                classification = await classify_solana_holder(address, client)
+                classified_holders.append({
+                    "address": address,
+                    "amount": amount,
+                    "type": classification["type"],
+                    "info": classification
+                })
             
-            all_amounts.sort(reverse=True)
-            top10 = all_amounts[:10]
-            top10_sum = sum(top10)
-            pct = (top10_sum / total_supply) * 100.0
+            if not classified_holders:
+                return None
+            
+            # 4. 按類型分組
+            lp_pools = [h for h in classified_holders if h["type"] == "liquidity_pool"]
+            lock_contracts = [h for h in classified_holders if h["type"] == "lock_contract"]
+            wallets = [h for h in classified_holders if h["type"] in ["wallet", "unknown"]]
+            
+            # 5. 計算各種指標
+            
+            # 全部前 10 名的集中度（包含 LP）
+            all_top10 = classified_holders[:10]
+            all_top10_sum = sum(h["amount"] for h in all_top10)
+            all_top10_pct = (all_top10_sum / total_supply) * 100.0
+            
+            # 排除 LP 池後的前 10 名（這是主要指標）
+            non_lp_holders = [h for h in classified_holders if h["type"] != "liquidity_pool"]
+            non_lp_top10 = non_lp_holders[:10]
+            non_lp_top10_sum = sum(h["amount"] for h in non_lp_top10)
+            non_lp_top10_pct = (non_lp_top10_sum / total_supply) * 100.0 if non_lp_top10 else 0.0
+            
+            # LP 池總量
+            lp_total = sum(h["amount"] for h in lp_pools)
+            lp_pct = (lp_total / total_supply) * 100.0
+            
+            # 6. 構建詳細的持幣者分解
+            breakdown_all = []
+            for i, h in enumerate(all_top10):
+                holder_pct = (h["amount"] / total_supply) * 100.0
+                entry = {
+                    "rank": i + 1,
+                    "address": h["address"][:8] + "..." + h["address"][-6:],
+                    "amount_pct": round(holder_pct, 2),
+                    "type": h["type"]
+                }
+                
+                # 如果是 LP 池，加上 DEX 名稱
+                if h["type"] == "liquidity_pool":
+                    entry["dex"] = h["info"].get("dex", "Unknown DEX")
+                
+                breakdown_all.append(entry)
+            
+            breakdown_non_lp = []
+            for i, h in enumerate(non_lp_top10):
+                holder_pct = (h["amount"] / total_supply) * 100.0
+                breakdown_non_lp.append({
+                    "rank": i + 1,
+                    "address": h["address"][:8] + "..." + h["address"][-6:],
+                    "amount_pct": round(holder_pct, 2),
+                    "type": h["type"]
+                })
             
             return {
-                "pct": pct,
-                "raw_sum": top10_sum,
+                "pct": non_lp_top10_pct,  # 主要指標：排除 LP 的集中度
+                "pct_with_lp": all_top10_pct,  # 參考：包含 LP 的集中度
+                "lp_pct": lp_pct,  # LP 池總佔比
+                "lp_count": len(lp_pools),  # LP 池數量
+                "raw_sum": non_lp_top10_sum,
                 "supply": total_supply,
-                "source": "helius"
+                "source": "helius_enhanced",
+                "breakdown": {
+                    "top10_all": breakdown_all,  # 所有前 10 名（含 LP）
+                    "top10_non_lp": breakdown_non_lp,  # 排除 LP 的前 10 名
+                    "lp_pools": [
+                        {
+                            "address": h["address"][:8] + "..." + h["address"][-6:],
+                            "amount_pct": round((h["amount"] / total_supply) * 100.0, 2),
+                            "dex": h["info"].get("dex", "Unknown")
+                        }
+                        for h in lp_pools
+                    ]
+                }
             }
             
     except Exception as e:
-        print(f"Helius error: {e}")
+        print(f"Helius 增強版錯誤: {e}")
         return None
 
 async def moralis_get(path: str, params: dict):
@@ -352,6 +511,7 @@ async def analyze_token(address: str, chain: str = "auto"):
 
         top10_info = await fetch_top10_concentration(chain, address)
         if top10_info:
+            # 使用排除 LP 的集中度作為主要指標
             top10_pct = float(top10_info.get("pct", 0.0))
             top_src = top10_info.get("source")
         else:
@@ -366,7 +526,8 @@ async def analyze_token(address: str, chain: str = "auto"):
             top10_pct=top10_pct,
         )
 
-        return {
+        # 構建返回結果
+        result = {
             "success": True,
             "chain": chain.upper(),
             "address": address,
@@ -380,6 +541,19 @@ async def analyze_token(address: str, chain: str = "auto"):
             },
             "analysis": tj
         }
+
+        # 如果有詳細的持幣者分解數據，加入結果
+        if top10_info and "breakdown" in top10_info:
+            result["holder_details"] = {
+                "concentration_with_lp": top10_info.get("pct_with_lp"),
+                "concentration_without_lp": top10_info.get("pct"),
+                "lp_percentage": top10_info.get("lp_pct"),
+                "lp_count": top10_info.get("lp_count"),
+                "breakdown": top10_info["breakdown"]
+            }
+
+        return result
+        
     except Exception as e:
         return {"error": str(e)}
 
@@ -389,7 +563,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/api/analyze', methods=['POST'])
-@limiter.limit("50 per minute")  # 每分鐘 50 次（提高 5 倍）
+@limiter.limit("50 per minute")
 def analyze():
     """分析 API 端點"""
     data = request.json
@@ -411,10 +585,11 @@ if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     debug = os.getenv('FLASK_ENV') != 'production'
     
-    print("🚀 啟動加密貨幣風險分析工具...")
+    print("🚀 啟動加密貨幣風險分析工具（智能版）...")
     print(f"📊 運行在端口: {port}")
     print(f"🌍 模式: {'開發' if debug else '生產'}")
     print("✅ API Keys 已配置 (Moralis + Helius)")
+    print("🔍 新功能: 智能識別流動性池，計算真實集中度")
     print("⚠️  速率限制: 每分鐘 50 次，每小時 300 次，每天 2000 次")
     print("")
     
