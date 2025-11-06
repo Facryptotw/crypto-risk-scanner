@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加密貨幣風險分析工具 - Crypto Risk Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', 'Heiti TC', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 42px;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #666;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* 風險指標說明區塊 */
+        .risk-explanations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .risk-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .risk-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+        }
+
+        .risk-card-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .risk-card-subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .risk-card-condition {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .risk-card-description {
+            color: #555;
+            line-height: 1.8;
+            font-size: 15px;
+            margin-bottom: 15px;
+        }
+
+        .risk-card-points {
+            list-style: none;
+            padding: 0;
+        }
+
+        .risk-card-points li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #444;
+            font-size: 14px;
+        }
+
+        .risk-card-points li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .risk-card.wash .risk-card-title { color: #e74c3c; }
+        .risk-card.wash .risk-card-points li:before { color: #e74c3c; }
+
+        .risk-card.lpi .risk-card-title { color: #ff6b35; }
+        .risk-card.lpi .risk-card-points li:before { color: #ff6b35; }
+        .risk-card.lpi .risk-card-condition { background: #fff4e6; border-color: #ff6b35; }
+
+        .risk-card.concentration .risk-card-title { color: #3498db; }
+        .risk-card.concentration .risk-card-points li:before { color: #3498db; }
+        .risk-card.concentration .risk-card-condition { background: #e8f4f8; border-color: #3498db; }
+
+        /* 分析工具區塊 */
+        .analyzer-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .analyzer-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-analyze:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-reset:hover {
+            background: #e0e0e0;
+        }
+
+        /* 載入動畫 */
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 結果顯示 */
+        .results {
+            display: none;
+            margin-top: 40px;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+        }
+
+        .result-header h2 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .result-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .result-body {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .risk-level-badge {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .risk-level-badge.低風險 {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .risk-level-badge.中風險 {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .risk-level-badge.中高風險 {
+            background: #ffe6cc;
+            color: #d9534f;
+        }
+
+        .risk-level-badge.高風險 {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .risk-level-badge.極高風險 {
+            background: #ff5252;
+            color: white;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .risk-indicators {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .risk-indicators h3 {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .indicator-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .indicator-item.detected {
+            background: #ffe6e6;
+            color: #d63031;
+        }
+
+        .indicator-item.safe {
+            background: #e6ffe6;
+            color: #27ae60;
+        }
+
+        .indicator-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+
+        .combo-analysis {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+        }
+
+        .combo-analysis h3 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .combo-text {
+            font-size: 18px;
+            line-height: 1.8;
+            color: #333;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: white;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .risk-explanations {
+                grid-template-columns: 1fr;
+            }
+
+            .analyzer-section {
+                padding: 25px;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 加密貨幣風險分析工具</h1>
+        <p>Crypto Risk Scanner - 洗盤、LPI、持有集中度一站式檢測</p>
+    </div>
+
+    <div class="container">
+        <!-- 風險指標說明 -->
+        <div class="risk-explanations">
+            <!-- Wash Trading -->
+            <div class="risk-card wash">
+                <div class="risk-card-title">
+                    ⚠️ 洗盤對敲 (Wash Trading)
+                </div>
+                <div class="risk-card-subtitle">人為製造交易量的市場操縱</div>
+                <div class="risk-card-condition">
+                    判定條件：交易量變化 ≥ 500% 且 價格變化 ≤ 5%
+                </div>
+                <div class="risk-card-description">
+                    洗盤對敲是指同一實體或協同方反覆買賣同一資產，以製造虛假交易量。當交易量暴增但價格變化不大時，表明這些交易是為了製造假象，而非真實市場需求。
+                </div>
+                <ul class="risk-card-points">
+                    <li>製造虛假熱度吸引投資者</li>
+                    <li>交易量非真實買盤推動</li>
+                    <li>最常見的市場操縱手法</li>
+                    <li>代幣會人為地上榜「熱門」</li>
+                    <li>停止對敲後真實流動性極低</li>
+                    <li>高暴跌風險</li>
+                </ul>
+            </div>
+
+            <!-- LPI -->
+            <div class="risk-card lpi">
+                <div class="risk-card-title">
+                    🔥 LPI (流動性價格膨脹)
+                </div>
+                <div class="risk-card-subtitle">Liquidity Pool-Based Price Inflation</div>
+                <div class="risk-card-condition">
+                    判定條件：流動性 ≤ 市值 × 5%
+                </div>
+                <div class="risk-card-description">
+                    當代幣的流動性池極度淺薄時，小額交易就能造成巨大價格波動。這創造出不反映真實市場深度的虛假價格，容易推高但同樣容易暴跌。
+                </div>
+                <ul class="risk-card-points">
+                    <li>小額買單可製造巨大漲幅</li>
+                    <li>價格對交易極度敏感</li>
+                    <li>容易拉高但同樣容易崩盤</li>
+                    <li>退場流動性極少</li>
+                    <li>DEX 平台的核心問題</li>
+                    <li>適度賣壓即可歸零</li>
+                    <li>高市值低流動性 = 空心估值</li>
+                </ul>
+            </div>
+
+            <!-- Holder Concentration -->
+            <div class="risk-card concentration">
+                <div class="risk-card-title">
+                    🎯 持有集中度
+                </div>
+                <div class="risk-card-subtitle">Top 10 持幣者風險評估</div>
+                <div class="risk-card-condition">
+                    分級：0-25%(低) / 26-35%(集中) / 36-50%(過於集中) / 51-100%(超級集中)
+                </div>
+                <div class="risk-card-description">
+                    前 10 大持有者控制的代幣比例。集中度越高，少數地址操縱價格的能力越強，散戶投資者的風險越大。
+                </div>
+                <ul class="risk-card-points">
+                    <li>集中度高 = 操縱風險大</li>
+                    <li>少數地址可控制市場</li>
+                    <li>砸盤成本極低</li>
+                    <li>高集中度易受協同操縱</li>
+                    <li>任何解鎖都可能暴跌</li>
+                    <li>智能合約無法保護拋售</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 分析工具 -->
+        <div class="analyzer-section">
+            <div class="analyzer-title">
+                🛠️ 開始分析代幣風險
+            </div>
+
+            <div class="input-group">
+                <div class="input-wrapper">
+                    <label for="tokenAddress">代幣合約地址 (CA)</label>
+                    <input 
+                        type="text" 
+                        id="tokenAddress" 
+                        placeholder="輸入代幣合約地址..."
+                        autocomplete="off"
+                    >
+                </div>
+                <div class="input-wrapper">
+                    <label for="chainSelect">選擇鏈</label>
+                    <select id="chainSelect">
+                        <option value="auto">自動偵測</option>
+                        <option value="ethereum">Ethereum</option>
+                        <option value="bsc">BSC</option>
+                        <option value="base">Base</option>
+                        <option value="polygon">Polygon</option>
+                        <option value="arbitrum">Arbitrum</option>
+                        <option value="optimism">Optimism</option>
+                        <option value="avalanche">Avalanche</option>
+                        <option value="solana">Solana</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-analyze" onclick="analyzeToken()">
+                    🔍 開始分析
+                </button>
+                <button class="btn-reset" onclick="resetForm()">
+                    🔄 重置
+                </button>
+            </div>
+
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>正在分析中，請稍候...</p>
+            </div>
+
+            <div class="results" id="results">
+                <!-- 結果將動態插入這裡 -->
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>⚠️ 本工具僅供參考，不構成投資建議。投資有風險，請謹慎決策。</p>
+        <p>© 2025 Crypto Risk Scanner | 數據來源: DexScreener, Moralis, Helius</p>
+    </div>
+
+    <script>
+        async function analyzeToken() {
+            const address = document.getElementById('tokenAddress').value.trim();
+            const chain = document.getElementById('chainSelect').value;
+
+            if (!address) {
+                alert('請輸入代幣合約地址');
+                return;
+            }
+
+            // 顯示載入動畫
+            document.querySelector('.loading').classList.add('active');
+            document.getElementById('results').classList.remove('active');
+            document.querySelector('.btn-analyze').disabled = true;
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ address, chain })
+                });
+
+                const data = await response.json();
+
+                // 隱藏載入動畫
+                document.querySelector('.loading').classList.remove('active');
+                document.querySelector('.btn-analyze').disabled = false;
+
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    showResults(data);
+                }
+            } catch (error) {
+                document.querySelector('.loading').classList.remove('active');
+                document.querySelector('.btn-analyze').disabled = false;
+                showError('分析失敗: ' + error.message);
+            }
+        }
+
+        function showResults(data) {
+            const resultsDiv = document.getElementById('results');
+            const analysis = data.analysis;
+            const metrics = data.data;
+
+            resultsDiv.innerHTML = `
+                <div class="result-header">
+                    <h2>${data.chain}</h2>
+                    <p>${data.address}</p>
+                </div>
+                <div class="result-body">
+                    <div class="risk-level-badge ${analysis.level}">
+                        風險等級: ${analysis.level} (分數: ${analysis.score}/7)
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">流動性</div>
+                            <div class="metric-value">$${formatNumber(metrics.liquidity)}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">市值</div>
+                            <div class="metric-value">$${formatNumber(metrics.marketcap)}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">24h 價格變化</div>
+                            <div class="metric-value">${metrics.price_change_24h.toFixed(2)}%</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">交易量變化</div>
+                            <div class="metric-value">${metrics.volume_change.toFixed(2)}%</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Top 10 持幣</div>
+                            <div class="metric-value">${metrics.top10_pct !== null ? metrics.top10_pct.toFixed(2) + '%' : 'N/A'}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">5% 門檻</div>
+                            <div class="metric-value">$${formatNumber(analysis.threshold)}</div>
+                        </div>
+                    </div>
+
+                    <div class="risk-indicators">
+                        <h3>風險指標檢測</h3>
+                        <div class="indicator-item ${analysis.wash ? 'detected' : 'safe'}">
+                            <span class="indicator-icon">${analysis.wash ? '⚠️' : '✅'}</span>
+                            <span>${analysis.wash ? '檢測到洗盤對敲' : '未檢測到洗盤對敲'}</span>
+                        </div>
+                        <div class="indicator-item ${analysis.lpi ? 'detected' : 'safe'}">
+                            <span class="indicator-icon">${analysis.lpi ? '🔥' : '✅'}</span>
+                            <span>${analysis.lpi ? '檢測到 LPI 風險' : '未檢測到 LPI 風險'}</span>
+                        </div>
+                        <div class="indicator-item ${['high', 'severe'].includes(analysis.conc_tier) ? 'detected' : 'safe'}">
+                            <span class="indicator-icon">${['high', 'severe'].includes(analysis.conc_tier) ? '🎯' : '✅'}</span>
+                            <span>${analysis.conc_text}</span>
+                        </div>
+                    </div>
+
+                    <div class="combo-analysis">
+                        <h3>綜合分析</h3>
+                        <div class="combo-text">
+                            ${analysis.combo}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            resultsDiv.classList.add('active');
+        }
+
+        function showError(message) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="error-message">
+                    ❌ ${message}
+                </div>
+            `;
+            resultsDiv.classList.add('active');
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(2) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(2) + 'K';
+            } else {
+                return num.toFixed(2);
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('tokenAddress').value = '';
+            document.getElementById('chainSelect').value = 'auto';
+            document.getElementById('results').classList.remove('active');
+        }
+
+        // Enter 鍵提交
+        document.getElementById('tokenAddress').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeToken();
+            }
+        });
+    </script>
+</body>
+</html>
