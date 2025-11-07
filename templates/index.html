@@ -640,28 +640,37 @@
 
         .risk-points {
             list-style: none;
+            padding: 0;
+            margin: 0;
         }
 
         .risk-points li {
-            padding: 8px 0 8px 25px;
+            padding: 8px 0 8px 20px;
             position: relative;
             color: rgba(255, 255, 255, 0.7);
             font-size: 14px;
+            line-height: 1.6;
         }
 
         .risk-points li::before {
-            content: ">";
+            content: "▸";
             position: absolute;
             left: 0;
-            color: var(--neon-pink);
+            color: var(--neon-cyan);
             font-weight: bold;
-            font-family: 'Courier New', monospace;
-            animation: blink 1.5s infinite;
+            font-size: 16px;
+            animation: arrowPulse 2s ease-in-out infinite;
         }
 
-        @keyframes blink {
-            0%, 50%, 100% { opacity: 1; }
-            25%, 75% { opacity: 0.3; }
+        @keyframes arrowPulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: translateX(0);
+            }
+            50% { 
+                opacity: 0.6;
+                transform: translateX(2px);
+            }
         }
 
         /* 數據指標條 */
