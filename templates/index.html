@@ -1716,6 +1716,7 @@
 
     <!-- Intro 大廳畫面 (新增) -->
     <div class="intro-hall" id="introHall">
+        <div class="intro-scanline"></div>
         <div class="intro-particles" id="introParticles"></div>
         <div class="intro-corner intro-corner-tl"></div>
         <div class="intro-corner intro-corner-tr"></div>
@@ -1724,9 +1725,17 @@
         
         <div class="intro-content">
             <div class="intro-logo-main">FACRYPTO</div>
-            <div class="intro-subtitle">RISK SCANNER</div>
-            <div class="intro-tagline">[ 加密貨幣風險檢測系統 ]</div>
-            <div class="intro-prompt">[ PRESS ANY KEY TO CONTINUE ]</div>
+            <div class="intro-subtitle">MEME SCANNER</div>
+            <div class="intro-tagline">[ MEME 幣風險檢測系統 ]</div>
+            <div class="intro-prompt">[ 點擊任意鍵進入 ]</div>
+        </div>
+    </div>
+
+    <!-- 全屏分析結果頁面 (新增) -->
+    <div class="fullscreen-result" id="fullscreenResult">
+        <button class="result-close-btn" onclick="closeFullscreenResult()">[ 返回 ]</button>
+        <div class="result-container" id="resultContent">
+            <!-- 結果將動態插入這裡 -->
         </div>
     </div>
 
@@ -1793,10 +1802,11 @@
                         bootDone.classList.add('show');
                         setTimeout(() => {
                             bootScreen.classList.add('hidden');
-                            mainContent.classList.add('visible');
                             
-                            // 觸發卡片動畫
-                            setTimeout(animateCards, 300);
+                            // 顯示 Intro 大廳而不是直接進入主頁面
+                            setTimeout(() => {
+                                showIntroHall();
+                            }, 500);
                         }, 1500);
                     }, 500);
                     
@@ -1897,121 +1907,105 @@
         }
 
         function showResults(data) {
-            const resultsDiv = document.getElementById('results');
             const analysis = data.analysis;
             const metrics = data.data;
+            
+            // 獲取風險等級文字和樣式類別
+            let riskClass = 'low';
+            let riskText = 'LOW RISK';
+            if (analysis.score >= 5) {
+                riskClass = 'high';
+                riskText = 'HIGH RISK';
+            } else if (analysis.score >= 3) {
+                riskClass = 'medium';
+                riskText = 'MEDIUM RISK';
+            }
 
-            resultsDiv.innerHTML = `
-                <div class="result-header">
-                    <h2>[ ${data.chain.toUpperCase()} NETWORK ]</h2>
-                    <p>${data.address}</p>
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = `
+                <div class="result-page-title">[ 分析結果 ]</div>
+                
+                <div class="result-risk-banner ${riskClass}">
+                    <div class="result-risk-level">${riskText}</div>
+                    <div class="result-risk-score">風險評分: ${analysis.score}/7</div>
                 </div>
-                <div class="result-body">
-                    <div class="risk-badge ${analysis.level}">
-                        [ RISK LEVEL: ${analysis.level} ]
-                        <br>
-                        <span style="font-size: 24px;">SCORE: ${analysis.score}/7</span>
-                    </div>
 
-                    <div class="metrics-grid">
-                        <div class="metric-card" style="animation-delay: 0s">
-                            <div class="metric-header">
-                                <div class="metric-label">LIQUIDITY</div>
-                                <div class="metric-icon">LIVE</div>
-                            </div>
-                            <div class="metric-value">$${formatNumber(metrics.liquidity)}</div>
-                            <div class="metric-chart">
-                                <div class="metric-chart-line"></div>
-                            </div>
-                        </div>
-                        <div class="metric-card" style="animation-delay: 0.1s">
-                            <div class="metric-header">
-                                <div class="metric-label">MARKET CAP</div>
-                                <div class="metric-icon">LIVE</div>
-                            </div>
-                            <div class="metric-value">$${formatNumber(metrics.marketcap)}</div>
-                            <div class="metric-chart">
-                                <div class="metric-chart-line"></div>
-                            </div>
-                        </div>
-                        <div class="metric-card" style="animation-delay: 0.2s">
-                            <div class="metric-header">
-                                <div class="metric-label">24H PRICE Δ</div>
-                                <div class="metric-icon">LIVE</div>
-                            </div>
-                            <div class="metric-value">${metrics.price_change_24h.toFixed(2)}%</div>
-                            <div class="metric-chart">
-                                <div class="metric-chart-line"></div>
-                            </div>
-                        </div>
-                        <div class="metric-card" style="animation-delay: 0.3s">
-                            <div class="metric-header">
-                                <div class="metric-label">VOLUME Δ</div>
-                                <div class="metric-icon">LIVE</div>
-                            </div>
-                            <div class="metric-value">${metrics.volume_change.toFixed(2)}%</div>
-                            <div class="metric-chart">
-                                <div class="metric-chart-line"></div>
-                            </div>
-                        </div>
-                        <div class="metric-card" style="animation-delay: 0.4s">
-                            <div class="metric-header">
-                                <div class="metric-label">TOP 10 HOLDERS</div>
-                                <div class="metric-icon">LIVE</div>
-                            </div>
-                            <div class="metric-value">${metrics.top10_pct !== null ? metrics.top10_pct.toFixed(2) + '%' : 'N/A'}</div>
-                            <div class="metric-chart">
-                                <div class="metric-chart-line"></div>
-                            </div>
-                        </div>
-                        <div class="metric-card" style="animation-delay: 0.5s">
-                            <div class="metric-header">
-                                <div class="metric-label">5% THRESHOLD</div>
-                                <div class="metric-icon">CALC</div>
-                            </div>
-                            <div class="metric-value">$${formatNumber(analysis.threshold)}</div>
-                            <div class="metric-chart">
-                                <div class="metric-chart-line"></div>
-                            </div>
+                <div class="result-metrics-grid">
+                    <div class="result-metric-card">
+                        <div class="result-metric-label">市值</div>
+                        <div class="result-metric-value">$${formatNumber(metrics.marketcap)}</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
                         </div>
                     </div>
-
-                    <div class="indicators-section">
-                        <div class="section-title">[ THREAT DETECTION ]</div>
-                        <div class="indicator-item ${analysis.wash ? 'detected' : 'safe'}" style="animation-delay: 0s">
-                            <span class="indicator-icon">${analysis.wash ? '⚠' : '✓'}</span>
-                            <span>${analysis.wash ? 'WASH TRADING DETECTED' : 'NO WASH TRADING'}</span>
-                        </div>
-                        <div class="indicator-item ${analysis.lpi ? 'detected' : 'safe'}" style="animation-delay: 0.1s">
-                            <span class="indicator-icon">${analysis.lpi ? '▲' : '✓'}</span>
-                            <span>${analysis.lpi ? 'LPI RISK DETECTED' : 'NO LPI RISK'}</span>
-                        </div>
-                        <div class="indicator-item ${['high', 'severe'].includes(analysis.conc_tier) ? 'detected' : 'safe'}" style="animation-delay: 0.2s">
-                            <span class="indicator-icon">${['high', 'severe'].includes(analysis.conc_tier) ? '◉' : '✓'}</span>
-                            <span>${analysis.conc_text}</span>
+                    
+                    <div class="result-metric-card">
+                        <div class="result-metric-label">交易量</div>
+                        <div class="result-metric-value">$${formatNumber(metrics.liquidity)}</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
                         </div>
                     </div>
-
-                    <div class="combo-section">
-                        <div class="section-title">[ COMPREHENSIVE ANALYSIS ]</div>
-                        <div class="combo-text">
-                            ${analysis.combo}
+                    
+                    <div class="result-metric-card">
+                        <div class="result-metric-label">24H 價格變化</div>
+                        <div class="result-metric-value">${metrics.price_change_24h >= 0 ? '+' : ''}${metrics.price_change_24h.toFixed(2)}%</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
                         </div>
+                    </div>
+                    
+                    <div class="result-metric-card">
+                        <div class="result-metric-label">交易量變化</div>
+                        <div class="result-metric-value">${metrics.volume_change >= 0 ? '+' : ''}${metrics.volume_change.toFixed(2)}%</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-metric-card">
+                        <div class="result-metric-label">TOP 10 持有量</div>
+                        <div class="result-metric-value">${metrics.top10_pct !== null ? metrics.top10_pct.toFixed(2) + '%' : 'N/A'}</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-metric-card">
+                        <div class="result-metric-label">1% 門檻</div>
+                        <div class="result-metric-value">$${formatNumber(analysis.threshold)}</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-threats-section">
+                    <div class="result-threats-title">[ 威脅檢測 ]</div>
+                    
+                    <div class="result-threat-item ${analysis.wash ? 'danger' : ''}">
+                        <div class="result-threat-icon">${analysis.wash ? '⚠' : '✓'}</div>
+                        <div class="result-threat-text">${analysis.wash ? '檢測到虛假交易' : '無虛假交易檢測'}</div>
+                    </div>
+                    
+                    <div class="result-threat-item ${analysis.lpi ? 'warning' : ''}">
+                        <div class="result-threat-icon">${analysis.lpi ? '▲' : '✓'}</div>
+                        <div class="result-threat-text">${analysis.lpi ? '檢測到 LPI 風險' : '無 LPI 風險'}</div>
+                    </div>
+                    
+                    <div class="result-threat-item ${['high', 'severe'].includes(analysis.conc_tier) ? 'warning' : ''}">
+                        <div class="result-threat-icon">${['high', 'severe'].includes(analysis.conc_tier) ? '◉' : '✓'}</div>
+                        <div class="result-threat-text">${analysis.conc_text || '持倉集中度正常'}</div>
                     </div>
                 </div>
             `;
 
-            resultsDiv.classList.add('active');
+            // 顯示全屏結果
+            document.getElementById('fullscreenResult').classList.add('active');
+        }
 
-            // 觸發指標和卡片動畫
-            setTimeout(() => {
-                document.querySelectorAll('.metric-card').forEach(card => {
-                    card.classList.add('animate');
-                });
-                document.querySelectorAll('.indicator-item').forEach(item => {
-                    item.classList.add('animate');
-                });
-            }, 100);
+        function closeFullscreenResult() {
+            document.getElementById('fullscreenResult').classList.remove('active');
         }
 
         function showError(message) {
@@ -2049,25 +2043,77 @@
             justify-content: center;
             align-items: center;
             transition: opacity 1s;
+            overflow: hidden;
+        }
+
+        /* 大廳背景網格 */
+        .intro-hall::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 245, 255, 0.15) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(0, 245, 255, 0.15) 2px, transparent 2px);
+            background-size: 60px 60px;
+            animation: gridMoveHall 30s linear infinite;
+            opacity: 0.3;
+        }
+
+        @keyframes gridMoveHall {
+            0% { transform: perspective(500px) rotateX(60deg) translateZ(0); }
+            100% { transform: perspective(500px) rotateX(60deg) translateZ(200px); }
         }
 
         .intro-hall.active {
             display: flex;
             opacity: 1;
+            animation: hallAppear 1s ease-out;
+        }
+
+        @keyframes hallAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .intro-hall.fade-out {
             opacity: 0;
+            animation: hallDisappear 1s ease-in;
+        }
+
+        @keyframes hallDisappear {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.1);
+            }
         }
 
         .intro-content {
             text-align: center;
             z-index: 10;
+            animation: contentFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes contentFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
         }
 
         .intro-logo-main {
             font-family: 'Orbitron', monospace;
-            font-size: 90px;
+            font-size: 100px;
             font-weight: 900;
             color: var(--neon-cyan);
             text-shadow: 
@@ -2075,10 +2121,22 @@
                 0 0 20px var(--neon-cyan),
                 0 0 30px var(--neon-cyan),
                 0 0 40px var(--neon-pink),
-                0 0 60px var(--neon-pink);
-            letter-spacing: 8px;
+                0 0 60px var(--neon-pink),
+                0 0 80px var(--neon-purple);
+            letter-spacing: 15px;
             margin-bottom: 20px;
-            animation: glitchLogo 3s infinite;
+            animation: glitchLogo 3s infinite, logoGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes logoGlow {
+            0%, 100% { 
+                filter: brightness(1);
+                transform: scale(1);
+            }
+            50% { 
+                filter: brightness(1.3);
+                transform: scale(1.02);
+            }
         }
 
         @keyframes glitchLogo {
@@ -2086,43 +2144,75 @@
                 transform: translate(0);
             }
             92% { 
-                transform: translate(-3px, 3px);
+                transform: translate(-4px, 4px);
                 text-shadow: 
-                    -3px 0 var(--neon-pink),
-                    3px 0 var(--neon-cyan);
+                    -4px 0 var(--neon-pink),
+                    4px 0 var(--neon-cyan),
+                    0 0 40px var(--neon-purple);
             }
             94% { 
-                transform: translate(3px, -3px);
+                transform: translate(4px, -4px);
+                text-shadow: 
+                    4px 0 var(--neon-pink),
+                    -4px 0 var(--neon-cyan),
+                    0 0 40px var(--neon-purple);
             }
         }
 
         .intro-subtitle {
             font-family: 'Rajdhani', sans-serif;
-            font-size: 32px;
-            font-weight: 300;
+            font-size: 42px;
+            font-weight: 700;
             color: var(--neon-green);
-            letter-spacing: 12px;
-            text-shadow: 0 0 10px var(--neon-green);
+            letter-spacing: 18px;
+            text-shadow: 
+                0 0 15px var(--neon-green),
+                0 0 30px var(--neon-green);
+            animation: subtitlePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes subtitlePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
         .intro-tagline {
-            font-size: 22px;
+            font-size: 24px;
             color: var(--neon-purple);
-            margin-top: 30px;
-            font-weight: 300;
+            margin-top: 40px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px var(--neon-purple);
         }
 
         .intro-prompt {
-            font-size: 18px;
+            font-size: 20px;
             color: var(--neon-cyan);
-            margin-top: 60px;
+            margin-top: 80px;
             animation: blink 1.5s infinite;
-            font-family: 'Courier Prime', monospace;
+            font-family: 'Courier New', monospace;
+            padding: 15px 40px;
+            border: 2px solid var(--neon-cyan);
+            display: inline-block;
+            box-shadow: 
+                0 0 15px var(--neon-cyan),
+                inset 0 0 15px rgba(0, 245, 255, 0.2);
+            letter-spacing: 3px;
         }
 
         @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+            0%, 100% { 
+                opacity: 1;
+                box-shadow: 
+                    0 0 15px var(--neon-cyan),
+                    inset 0 0 15px rgba(0, 245, 255, 0.2);
+            }
+            50% { 
+                opacity: 0.4;
+                box-shadow: 
+                    0 0 5px var(--neon-cyan),
+                    inset 0 0 5px rgba(0, 245, 255, 0.1);
+            }
         }
 
         /* Intro 粒子效果 */
@@ -2138,42 +2228,452 @@
 
         .intro-particle {
             position: absolute;
-            width: 3px;
-            height: 3px;
+            width: 4px;
+            height: 4px;
             background: var(--neon-cyan);
             border-radius: 50%;
             opacity: 0;
             animation: introParticleFloat 8s infinite;
+            box-shadow: 0 0 10px var(--neon-cyan);
         }
 
         @keyframes introParticleFloat {
             0% { 
                 opacity: 0;
-                transform: translateY(100vh) translateX(0);
+                transform: translateY(100vh) translateX(0) scale(0.5);
             }
-            10% { opacity: 0.8; }
-            90% { opacity: 0.8; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
             100% { 
                 opacity: 0;
-                transform: translateY(-10vh) translateX(100px);
+                transform: translateY(-10vh) translateX(100px) scale(1.5);
             }
         }
 
-        /* Intro 角落裝飾 */
+        /* Intro 角落裝飾 - 增強版 */
         .intro-corner {
             position: fixed;
-            width: 100px;
-            height: 100px;
-            border: 2px solid var(--neon-cyan);
-            opacity: 0.3;
+            width: 150px;
+            height: 150px;
+            border: 3px solid var(--neon-cyan);
+            opacity: 0.5;
             z-index: 5;
             animation: cornerPulse 3s infinite;
+            box-shadow: 0 0 20px var(--neon-cyan);
         }
 
-        .intro-corner-tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
-        .intro-corner-tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
-        .intro-corner-bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
-        .intro-corner-br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+        @keyframes cornerPulse {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.05);
+            }
+        }
+
+        .intro-corner-tl { 
+            top: 30px; 
+            left: 30px; 
+            border-right: none; 
+            border-bottom: none;
+            animation: cornerPulse 3s infinite, cornerSlideTL 4s ease-in-out infinite;
+        }
+        .intro-corner-tr { 
+            top: 30px; 
+            right: 30px; 
+            border-left: none; 
+            border-bottom: none;
+            animation: cornerPulse 3s infinite 0.5s, cornerSlideTR 4s ease-in-out infinite;
+        }
+        .intro-corner-bl { 
+            bottom: 30px; 
+            left: 30px; 
+            border-right: none; 
+            border-top: none;
+            animation: cornerPulse 3s infinite 1s, cornerSlideBL 4s ease-in-out infinite;
+        }
+        .intro-corner-br { 
+            bottom: 30px; 
+            right: 30px; 
+            border-left: none; 
+            border-top: none;
+            animation: cornerPulse 3s infinite 1.5s, cornerSlideBR 4s ease-in-out infinite;
+        }
+
+        @keyframes cornerSlideTL {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(10px, 10px); }
+        }
+
+        @keyframes cornerSlideTR {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-10px, 10px); }
+        }
+
+        @keyframes cornerSlideBL {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(10px, -10px); }
+        }
+
+        @keyframes cornerSlideBR {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-10px, -10px); }
+        }
+
+        /* 大廳掃描線 */
+        .intro-scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg,
+                transparent,
+                var(--neon-cyan),
+                transparent
+            );
+            animation: introScan 3s linear infinite;
+            box-shadow: 0 0 20px var(--neon-cyan);
+            z-index: 20;
+        }
+
+        @keyframes introScan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* ===== 全屏分析結果頁面 ===== */
+        .fullscreen-result {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+            z-index: 8000;
+            display: none;
+            opacity: 0;
+            overflow-y: auto;
+            transition: opacity 0.8s;
+        }
+
+        .fullscreen-result.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .fullscreen-result::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            animation: gridMove 20s linear infinite;
+            opacity: 0.3;
+        }
+
+        .result-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 60px 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 結果頁面標題 */
+        .result-page-title {
+            text-align: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 28px;
+            color: var(--neon-cyan);
+            letter-spacing: 8px;
+            margin-bottom: 50px;
+            text-shadow: 0 0 20px var(--neon-cyan);
+            animation: titleFlicker 3s infinite;
+        }
+
+        @keyframes titleFlicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* 風險等級大標題 */
+        .result-risk-banner {
+            background: rgba(10, 15, 20, 0.8);
+            border: 3px solid var(--neon-green);
+            padding: 50px;
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 0 40px rgba(0, 255, 136, 0.4),
+                inset 0 0 40px rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+        }
+
+        .result-risk-banner.low {
+            border-color: var(--neon-green);
+            box-shadow: 
+                0 0 40px rgba(0, 255, 136, 0.4),
+                inset 0 0 40px rgba(0, 255, 136, 0.1);
+        }
+
+        .result-risk-banner.medium {
+            border-color: var(--neon-orange);
+            box-shadow: 
+                0 0 40px rgba(255, 107, 53, 0.4),
+                inset 0 0 40px rgba(255, 107, 53, 0.1);
+        }
+
+        .result-risk-banner.high {
+            border-color: var(--neon-pink);
+            box-shadow: 
+                0 0 40px rgba(255, 0, 110, 0.4),
+                inset 0 0 40px rgba(255, 0, 110, 0.1);
+        }
+
+        .result-risk-level {
+            font-family: 'Orbitron', monospace;
+            font-size: 72px;
+            font-weight: 900;
+            letter-spacing: 15px;
+            margin-bottom: 20px;
+            animation: riskPulse 2s ease-in-out infinite;
+        }
+
+        .result-risk-banner.low .result-risk-level {
+            color: var(--neon-green);
+            text-shadow: 
+                0 0 20px var(--neon-green),
+                0 0 40px var(--neon-green),
+                0 0 60px var(--neon-green);
+        }
+
+        .result-risk-banner.medium .result-risk-level {
+            color: var(--neon-orange);
+            text-shadow: 
+                0 0 20px var(--neon-orange),
+                0 0 40px var(--neon-orange),
+                0 0 60px var(--neon-orange);
+        }
+
+        .result-risk-banner.high .result-risk-level {
+            color: var(--neon-pink);
+            text-shadow: 
+                0 0 20px var(--neon-pink),
+                0 0 40px var(--neon-pink),
+                0 0 60px var(--neon-pink);
+        }
+
+        @keyframes riskPulse {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.05); filter: brightness(1.3); }
+        }
+
+        .result-risk-score {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 32px;
+            font-weight: 500;
+            letter-spacing: 4px;
+            color: var(--neon-cyan);
+        }
+
+        /* 數據卡片網格 */
+        .result-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .result-metric-card {
+            background: rgba(10, 15, 20, 0.9);
+            border: 2px solid var(--neon-cyan);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: cardSlideIn 0.6s ease-out forwards;
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.2);
+            border-radius: 8px;
+        }
+
+        .result-metric-card:nth-child(1) { animation-delay: 0.1s; }
+        .result-metric-card:nth-child(2) { animation-delay: 0.2s; }
+        .result-metric-card:nth-child(3) { animation-delay: 0.3s; }
+        .result-metric-card:nth-child(4) { animation-delay: 0.4s; }
+        .result-metric-card:nth-child(5) { animation-delay: 0.5s; }
+        .result-metric-card:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes cardSlideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-metric-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            color: var(--neon-purple);
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .result-metric-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 15px var(--neon-cyan);
+            margin-bottom: 15px;
+        }
+
+        .result-metric-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 245, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .result-metric-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+            width: 0%;
+            animation: barFill 1.5s ease-out forwards;
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+
+        @keyframes barFill {
+            to { width: 100%; }
+        }
+
+        /* 威脅檢測區塊 */
+        .result-threats-section {
+            background: rgba(10, 15, 20, 0.9);
+            border: 2px solid var(--neon-green);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.2);
+            margin-bottom: 40px;
+        }
+
+        .result-threats-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 24px;
+            color: var(--neon-green);
+            letter-spacing: 6px;
+            margin-bottom: 30px;
+            text-align: center;
+            text-shadow: 0 0 15px var(--neon-green);
+        }
+
+        .result-threat-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-left: 4px solid var(--neon-green);
+            opacity: 0;
+            transform: translateX(-50px);
+            animation: threatSlideIn 0.5s ease-out forwards;
+        }
+
+        .result-threat-item:nth-child(2) { animation-delay: 0.7s; }
+        .result-threat-item:nth-child(3) { animation-delay: 0.8s; }
+        .result-threat-item:nth-child(4) { animation-delay: 0.9s; }
+
+        .result-threat-item.warning {
+            border-left-color: var(--neon-orange);
+        }
+
+        .result-threat-item.danger {
+            border-left-color: var(--neon-pink);
+        }
+
+        @keyframes threatSlideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .result-threat-icon {
+            font-size: 28px;
+            margin-right: 20px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .result-threat-text {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 20px;
+            color: var(--neon-cyan);
+            letter-spacing: 2px;
+        }
+
+        /* 關閉按鈕 */
+        .result-close-btn {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            padding: 15px 40px;
+            background: transparent;
+            border: 2px solid var(--neon-pink);
+            color: var(--neon-pink);
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+        }
+
+        .result-close-btn:hover {
+            background: var(--neon-pink);
+            color: var(--dark-bg);
+            box-shadow: 0 0 30px rgba(255, 0, 110, 0.8);
+            transform: scale(1.05);
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 1024px) {
+            .result-metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .result-metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .result-risk-level {
+                font-size: 48px;
+                letter-spacing: 8px;
+            }
+            
+            .result-container {
+                padding: 40px 20px;
+            }
+        }
     </style>
 
     <script>
@@ -2214,18 +2714,26 @@
         // 監聽任意按鍵和點擊來離開 Intro 大廳
         let introActive = false;
         
-        document.addEventListener('keydown', function(e) {
+        // 在 DOM 加載完成後設置事件監聽器
+        document.addEventListener('DOMContentLoaded', function() {
             const introHall = document.getElementById('introHall');
-            if (introHall && introHall.classList.contains('active') && !introActive) {
-                introActive = true;
-                hideIntroHall();
-            }
-        });
-
-        document.getElementById('introHall').addEventListener('click', function() {
-            if (this.classList.contains('active') && !introActive) {
-                introActive = true;
-                hideIntroHall();
+            
+            // 監聽按鍵事件
+            document.addEventListener('keydown', function(e) {
+                if (introHall && introHall.classList.contains('active') && !introActive) {
+                    introActive = true;
+                    hideIntroHall();
+                }
+            });
+            
+            // 監聽點擊事件
+            if (introHall) {
+                introHall.addEventListener('click', function() {
+                    if (this.classList.contains('active') && !introActive) {
+                        introActive = true;
+                        hideIntroHall();
+                    }
+                });
             }
         });
 
