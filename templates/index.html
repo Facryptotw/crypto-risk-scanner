@@ -909,6 +909,128 @@
             transform: translateY(-3px);
         }
 
+
+        /* ===== 解密動畫樣式 (新增) ===== */
+        .decrypt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+            z-index: 8000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .decrypt-overlay.active {
+            display: flex;
+            animation: fadeIn 0.5s;
+        }
+
+        .decrypt-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 36px;
+            color: var(--neon-cyan);
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px var(--neon-cyan);
+            letter-spacing: 4px;
+        }
+
+        .data-blocks {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-bottom: 40px;
+            width: 600px;
+        }
+
+        .data-block {
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--neon-purple);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            opacity: 0;
+            background: rgba(179, 0, 255, 0.1);
+            box-shadow: 0 0 10px rgba(179, 0, 255, 0.3);
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .data-block.decrypting {
+            animation: blockDecrypt 0.5s forwards;
+        }
+
+        @keyframes blockDecrypt {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(180deg);
+                background: rgba(255, 0, 68, 0.3);
+                border-color: var(--neon-pink);
+            }
+            50% {
+                transform: scale(1.2) rotate(90deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+                background: rgba(0, 245, 255, 0.1);
+                border-color: var(--neon-cyan);
+            }
+        }
+
+        .decrypt-status {
+            font-size: 18px;
+            color: var(--neon-green);
+            text-align: center;
+            line-height: 1.8;
+            text-shadow: 0 0 5px var(--neon-green);
+            font-family: 'Courier Prime', monospace;
+            margin-bottom: 30px;
+        }
+
+        .decrypt-progress {
+            width: 500px;
+        }
+
+        .decrypt-bar-bg {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--neon-cyan);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .decrypt-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, 
+                var(--neon-cyan), 
+                var(--neon-purple),
+                var(--neon-pink)
+            );
+            width: 0%;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        .decrypt-percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            text-shadow: 0 0 5px black;
+            z-index: 10;
+        }
+
         /* 分析動畫 */
         .analyzing {
             display: none;
@@ -1592,6 +1714,23 @@
         </div>
     </div>
 
+    <!-- Intro 大廳畫面 (新增) -->
+    <div class="intro-hall" id="introHall">
+        <div class="intro-particles" id="introParticles"></div>
+        <div class="intro-corner intro-corner-tl"></div>
+        <div class="intro-corner intro-corner-tr"></div>
+        <div class="intro-corner intro-corner-bl"></div>
+        <div class="intro-corner intro-corner-br"></div>
+        
+        <div class="intro-content">
+            <div class="intro-logo-main">FACRYPTO</div>
+            <div class="intro-subtitle">RISK SCANNER</div>
+            <div class="intro-tagline">[ 加密貨幣風險檢測系統 ]</div>
+            <div class="intro-prompt">[ PRESS ANY KEY TO CONTINUE ]</div>
+        </div>
+    </div>
+
+
     <script>
         // ===== 粒子效果 =====
         function createParticles() {
@@ -1690,8 +1829,8 @@
                 return;
             }
 
-            // 顯示分析動畫
-            document.getElementById('analyzing').classList.add('active');
+            // 顯示解密動畫
+            showDecryptAnimation();
             document.getElementById('results').classList.remove('active');
             document.querySelector('.btn-analyze').disabled = true;
 
@@ -1734,22 +1873,26 @@
                 const data = await response.json();
 
                 setTimeout(() => {
-                    document.getElementById('analyzing').classList.remove('active');
+                    hideDecryptAnimation();
                     document.querySelector('.btn-analyze').disabled = false;
-
-                    if (data.error) {
-                        showError(data.error);
-                    } else {
-                        showResults(data);
-                    }
-                }, 4000);
+                    
+                    setTimeout(() => {
+                        if (data.error) {
+                            showError(data.error);
+                        } else {
+                            showResults(data);
+                        }
+                    }, 500);
+                }, 3500);
 
             } catch (error) {
                 setTimeout(() => {
-                    document.getElementById('analyzing').classList.remove('active');
+                    hideDecryptAnimation();
                     document.querySelector('.btn-analyze').disabled = false;
-                    showError('SCAN FAILED: ' + error.message);
-                }, 4000);
+                    setTimeout(() => {
+                        showError('SCAN FAILED: ' + error.message);
+                    }, 500);
+                }, 3500);
             }
         }
 
@@ -1890,12 +2033,273 @@
                 return num.toFixed(2);
             }
         }
+    </script>
+
+    <style>
+        /* ===== Intro 大廳樣式 (新增) ===== */
+        .intro-hall {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+            z-index: 9000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s;
+        }
+
+        .intro-hall.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .intro-hall.fade-out {
+            opacity: 0;
+        }
+
+        .intro-content {
+            text-align: center;
+            z-index: 10;
+        }
+
+        .intro-logo-main {
+            font-family: 'Orbitron', monospace;
+            font-size: 90px;
+            font-weight: 900;
+            color: var(--neon-cyan);
+            text-shadow: 
+                0 0 10px var(--neon-cyan),
+                0 0 20px var(--neon-cyan),
+                0 0 30px var(--neon-cyan),
+                0 0 40px var(--neon-pink),
+                0 0 60px var(--neon-pink);
+            letter-spacing: 8px;
+            margin-bottom: 20px;
+            animation: glitchLogo 3s infinite;
+        }
+
+        @keyframes glitchLogo {
+            0%, 90%, 100% { 
+                transform: translate(0);
+            }
+            92% { 
+                transform: translate(-3px, 3px);
+                text-shadow: 
+                    -3px 0 var(--neon-pink),
+                    3px 0 var(--neon-cyan);
+            }
+            94% { 
+                transform: translate(3px, -3px);
+            }
+        }
+
+        .intro-subtitle {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 32px;
+            font-weight: 300;
+            color: var(--neon-green);
+            letter-spacing: 12px;
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+
+        .intro-tagline {
+            font-size: 22px;
+            color: var(--neon-purple);
+            margin-top: 30px;
+            font-weight: 300;
+        }
+
+        .intro-prompt {
+            font-size: 18px;
+            color: var(--neon-cyan);
+            margin-top: 60px;
+            animation: blink 1.5s infinite;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Intro 粒子效果 */
+        .intro-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .intro-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--neon-cyan);
+            border-radius: 50%;
+            opacity: 0;
+            animation: introParticleFloat 8s infinite;
+        }
+
+        @keyframes introParticleFloat {
+            0% { 
+                opacity: 0;
+                transform: translateY(100vh) translateX(0);
+            }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { 
+                opacity: 0;
+                transform: translateY(-10vh) translateX(100px);
+            }
+        }
+
+        /* Intro 角落裝飾 */
+        .intro-corner {
+            position: fixed;
+            width: 100px;
+            height: 100px;
+            border: 2px solid var(--neon-cyan);
+            opacity: 0.3;
+            z-index: 5;
+            animation: cornerPulse 3s infinite;
+        }
+
+        .intro-corner-tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+        .intro-corner-tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+        .intro-corner-bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+        .intro-corner-br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+    </style>
+
+    <script>
+        // ===== Intro 大廳控制函數 (新增) =====
+        function showIntroHall() {
+            const introHall = document.getElementById('introHall');
+            introHall.classList.add('active');
+            generateIntroParticles();
+        }
+
+        function hideIntroHall() {
+            const introHall = document.getElementById('introHall');
+            const mainContent = document.getElementById('mainContent');
+            
+            introHall.classList.add('fade-out');
+            
+            setTimeout(() => {
+                introHall.style.display = 'none';
+                mainContent.classList.add('visible');
+                
+                // 觸發卡片動畫
+                setTimeout(animateCards, 300);
+            }, 1000);
+        }
+
+        function generateIntroParticles() {
+            const particlesContainer = document.getElementById('introParticles');
+            for (let i = 0; i < 40; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'intro-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // 監聽任意按鍵和點擊來離開 Intro 大廳
+        let introActive = false;
+        
+        document.addEventListener('keydown', function(e) {
+            const introHall = document.getElementById('introHall');
+            if (introHall && introHall.classList.contains('active') && !introActive) {
+                introActive = true;
+                hideIntroHall();
+            }
+        });
+
+        document.getElementById('introHall').addEventListener('click', function() {
+            if (this.classList.contains('active') && !introActive) {
+                introActive = true;
+                hideIntroHall();
+            }
+        });
+
+
+        // ===== 解密動畫控制函數 (新增) =====
+        function showDecryptAnimation() {
+            const decryptOverlay = document.getElementById('decryptOverlay');
+            const dataBlocks = document.getElementById('dataBlocks');
+            const decryptStatus = document.getElementById('decryptStatus');
+            const decryptFill = document.getElementById('decryptFill');
+            const decryptPercentage = document.getElementById('decryptPercentage');
+
+            // 清空之前的內容
+            dataBlocks.innerHTML = '';
+            decryptStatus.innerHTML = '';
+            decryptFill.style.width = '0%';
+            decryptPercentage.textContent = '0%';
+
+            // 生成數據方塊
+            const symbols = ['█', '▓', '▒', '░', '■', '□', '▪', '▫', '◆', '◇'];
+            for (let i = 0; i < 32; i++) {
+                const block = document.createElement('div');
+                block.className = 'data-block';
+                block.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                dataBlocks.appendChild(block);
+            }
+
+            // 狀態信息
+            const statusMessages = [
+                '> Connecting to blockchain...',
+                '> Fetching token data...',
+                '> Analyzing liquidity pool...',
+                '> Detecting wash trading...',
+                '> Checking holder concentration...',
+                '> Calculating risk score...',
+                '> Generating report...'
+            ];
+
+            statusMessages.forEach((msg, index) => {
+                const div = document.createElement('div');
+                div.textContent = msg;
+                div.style.animationDelay = (index * 0.5) + 's';
+                decryptStatus.appendChild(div);
+            });
+
+            // 顯示覆蓋層
+            decryptOverlay.classList.add('active');
+
+            // 啟動解密動畫
+            const blocks = dataBlocks.querySelectorAll('.data-block');
+            let decryptProgress = 0;
+
+            blocks.forEach((block, index) => {
+                setTimeout(() => {
+                    block.classList.add('decrypting');
+                    
+                    decryptProgress = Math.floor(((index + 1) / blocks.length) * 100);
+                    decryptFill.style.width = decryptProgress + '%';
+                    decryptPercentage.textContent = decryptProgress + '%';
+                }, index * 80 + 500);
+            });
+        }
+
+        function hideDecryptAnimation() {
+            const decryptOverlay = document.getElementById('decryptOverlay');
+            decryptOverlay.classList.remove('active');
+        }
 
         function resetForm() {
             document.getElementById('tokenAddress').value = '';
             document.getElementById('chainSelect').value = 'auto';
             document.getElementById('results').classList.remove('active');
             document.getElementById('analyzing').classList.remove('active');
+            hideDecryptAnimation();
         }
 
         // Enter 鍵提交
@@ -1905,5 +2309,19 @@
             }
         });
     </script>
+
+    <!-- 解密動畫覆蓋層 (新增) -->
+    <div class="decrypt-overlay" id="decryptOverlay">
+        <div class="decrypt-title">[ ANALYZING BLOCKCHAIN DATA ]</div>
+        <div class="data-blocks" id="dataBlocks"></div>
+        <div class="decrypt-status" id="decryptStatus"></div>
+        <div class="decrypt-progress">
+            <div class="decrypt-bar-bg">
+                <div class="decrypt-bar-fill" id="decryptFill"></div>
+                <div class="decrypt-percentage" id="decryptPercentage">0%</div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
