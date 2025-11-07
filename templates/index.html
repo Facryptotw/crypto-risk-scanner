@@ -2818,6 +2818,234 @@
                 font-size: 24px;
                 letter-spacing: 6px;
             }
+
+            /* ===== 手機版響應式設計 ===== */
+            
+            /* 啟動畫面 */
+            .boot-logo {
+                font-size: 28px;
+                letter-spacing: 2px;
+            }
+
+            .boot-avatar {
+                width: 80px;
+                height: 80px;
+            }
+
+            .boot-logo-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .boot-text {
+                font-size: 12px;
+            }
+
+            .boot-done {
+                font-size: 24px;
+            }
+
+            /* Intro 大廳 - 手機版優化 */
+            .intro-logo-main {
+                font-size: 48px;
+                letter-spacing: 8px;
+            }
+
+            .intro-subtitle {
+                font-size: 24px;
+                letter-spacing: 8px;
+            }
+
+            .intro-tagline {
+                font-size: 16px;
+                letter-spacing: 2px;
+                margin-top: 20px;
+            }
+
+            .intro-prompt {
+                font-size: 14px;
+                padding: 12px 25px;
+                margin-top: 40px;
+                letter-spacing: 2px;
+            }
+
+            .intro-corner {
+                width: 80px;
+                height: 80px;
+                border-width: 2px;
+            }
+
+            .intro-corner-tl,
+            .intro-corner-tr {
+                top: 15px;
+            }
+
+            .intro-corner-bl,
+            .intro-corner-br {
+                bottom: 15px;
+            }
+
+            .intro-corner-tl,
+            .intro-corner-bl {
+                left: 15px;
+            }
+
+            .intro-corner-tr,
+            .intro-corner-br {
+                right: 15px;
+            }
+
+            /* 解密動畫 - 手機版優化 */
+            .decrypt-title {
+                font-size: 20px;
+                letter-spacing: 4px;
+                margin-bottom: 30px;
+            }
+
+            .data-blocks {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+                margin-bottom: 30px;
+            }
+
+            .data-block {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+            }
+
+            .decrypt-status {
+                font-size: 12px;
+            }
+
+            .decrypt-bar-bg {
+                height: 25px;
+            }
+
+            .decrypt-percentage {
+                font-size: 14px;
+            }
+
+            /* 全屏結果頁面 - 手機版優化 */
+            .result-network-title {
+                font-size: 24px;
+                letter-spacing: 4px;
+            }
+
+            .result-network-address {
+                font-size: 10px;
+                letter-spacing: 1px;
+            }
+
+            .result-risk-banner {
+                padding: 30px 15px;
+            }
+
+            .result-risk-level {
+                font-size: 28px;
+                letter-spacing: 6px;
+            }
+
+            .result-risk-score {
+                font-size: 20px;
+                letter-spacing: 3px;
+            }
+
+            .result-metric-card {
+                padding: 20px;
+            }
+
+            .result-metric-label {
+                font-size: 12px;
+                letter-spacing: 2px;
+            }
+
+            .result-metric-value {
+                font-size: 24px;
+            }
+
+            .result-threats-section {
+                padding: 20px;
+            }
+
+            .result-threats-title {
+                font-size: 20px;
+                letter-spacing: 4px;
+                margin-bottom: 20px;
+            }
+
+            .result-threat-item {
+                padding: 15px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .result-threat-icon {
+                font-size: 20px;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+
+            .result-threat-text {
+                font-size: 14px;
+                letter-spacing: 1px;
+            }
+
+            .result-close-btn {
+                top: 15px;
+                right: 15px;
+                padding: 10px 20px;
+                font-size: 10px;
+                letter-spacing: 2px;
+            }
+        }
+
+        /* 超小螢幕優化 */
+        @media (max-width: 480px) {
+            .intro-logo-main {
+                font-size: 36px;
+                letter-spacing: 4px;
+            }
+
+            .intro-subtitle {
+                font-size: 18px;
+                letter-spacing: 4px;
+            }
+
+            .intro-tagline {
+                font-size: 14px;
+            }
+
+            .decrypt-title {
+                font-size: 16px;
+                letter-spacing: 2px;
+            }
+
+            .data-blocks {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+            }
+
+            .data-block {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .result-page-title {
+                font-size: 14px;
+                letter-spacing: 2px;
+            }
+
+            .result-network-title {
+                font-size: 18px;
+                letter-spacing: 2px;
+            }
+
+            .result-risk-level {
+                font-size: 20px;
+                letter-spacing: 4px;
+            }
         }
     </style>
 
