@@ -2115,7 +2115,7 @@
         });
 
         // ===== 分析功能 =====
-        function analyzeToken() {
+        async function analyzeToken() {
             const tokenAddress = document.getElementById('tokenAddress').value.trim();
             const chainSelect = document.getElementById('chainSelect').value;
 
@@ -2131,15 +2131,45 @@
 
             document.getElementById('analyzing').classList.add('active');
 
-            setTimeout(() => {
-                document.getElementById('analyzing').classList.remove('active');
-                startDecryption();
-            }, 2000);
+            try {
+                // 調用真實的後端 API
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        address: tokenAddress, 
+                        chain: chainSelect 
+                    })
+                });
+
+                const data = await response.json();
+
+                setTimeout(() => {
+                    document.getElementById('analyzing').classList.remove('active');
+                    
+                    if (data.error) {
+                        alert('分析錯誤: ' + data.error);
+                    } else {
+                        startDecryption(data);  // 將數據傳遞給解密動畫
+                    }
+                }, 2000);
+
+            } catch (error) {
+                setTimeout(() => {
+                    document.getElementById('analyzing').classList.remove('active');
+                    alert('網絡錯誤: ' + error.message);
+                }, 2000);
+            }
         }
 
         // ===== 解密動畫 =====
-        function startDecryption() {
+        function startDecryption(apiData) {
             document.getElementById('decryptOverlay').classList.add('active');
+            
+            // 保存 API 數據供後續使用
+            window.currentAnalysisData = apiData;
             
             const dataSteps = [
                 'Fetching on-chain data...',
@@ -2171,7 +2201,7 @@
                 } else {
                     setTimeout(() => {
                         document.getElementById('decryptOverlay').classList.remove('active');
-                        showResults();  // 調用顯示結果函數
+                        showResults(window.currentAnalysisData);  // 傳遞真實數據
                         document.getElementById('results').classList.add('active');
                         document.getElementById('dataBlocks').innerHTML = '';
                         document.getElementById('decryptFill').style.width = '0%';
@@ -2205,34 +2235,15 @@
         }
 
         // ===== 顯示分析結果 =====
-        function showResults() {
-            // 示例數據 - 實際應該從API獲取
-            const exampleData = {
-                success: true,
-                chain: "BSC",  // 這個會從API獲取
-                address: "0x799c73a7c447103a3a024f56646e4537a7164444",
-                data: {
-                    liquidity: 32370,
-                    marketcap: 50910,
-                    price_change_24h: 7.46,
-                    volume_change: 12.10,
-                    top10_pct: 77.79,
-                    top10_source: "moralis"
-                },
-                analysis: {
-                    wash: false,
-                    lpi: false,
-                    conc_tier: "high",
-                    conc_text: "持有度超級集中(很危險!)",
-                    threshold: 2545.5,
-                    combo: "僅集中度過高 → 中風險｜籌碼結構脆弱",
-                    score: 3,
-                    level: "中風險"
-                }
-            };
+        function showResults(apiData) {
+            // 使用從 API 獲取的真實數據
+            if (!apiData || !apiData.success) {
+                alert('無法獲取分析數據');
+                return;
+            }
 
-            const data = exampleData.data;
-            const analysis = exampleData.analysis;
+            const data = apiData.data;
+            const analysis = apiData.analysis;
 
             // 確定風險等級樣式
             let riskClass = 'medium';
@@ -2260,7 +2271,7 @@
                 'AVALANCHE': 'AVALANCHE'
             };
             
-            const rawChain = (exampleData.chain || 'UNKNOWN').toUpperCase();
+            const rawChain = (apiData.chain || 'UNKNOWN').toUpperCase();
             const networkName = chainNameMap[rawChain] || rawChain;
 
             // 構建HTML
