@@ -2171,6 +2171,7 @@
                 } else {
                     setTimeout(() => {
                         document.getElementById('decryptOverlay').classList.remove('active');
+                        showResults();  // 調用顯示結果函數
                         document.getElementById('results').classList.add('active');
                         document.getElementById('dataBlocks').innerHTML = '';
                         document.getElementById('decryptFill').style.width = '0%';
@@ -2189,6 +2190,196 @@
                 if ((i + 1) % 10 === 0) data += '\n';
             }
             return data;
+        }
+
+
+        // ===== 格式化數字 =====
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(2) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(2) + 'K';
+            } else {
+                return num.toFixed(2);
+            }
+        }
+
+        // ===== 顯示分析結果 =====
+        function showResults() {
+            // 示例數據 - 實際應該從API獲取
+            const exampleData = {
+                success: true,
+                chain: "BSC",  // 這個會從API獲取
+                address: "0x799c73a7c447103a3a024f56646e4537a7164444",
+                data: {
+                    liquidity: 32370,
+                    marketcap: 50910,
+                    price_change_24h: 7.46,
+                    volume_change: 12.10,
+                    top10_pct: 77.79,
+                    top10_source: "moralis"
+                },
+                analysis: {
+                    wash: false,
+                    lpi: false,
+                    conc_tier: "high",
+                    conc_text: "持有度超級集中(很危險!)",
+                    threshold: 2545.5,
+                    combo: "僅集中度過高 → 中風險｜籌碼結構脆弱",
+                    score: 3,
+                    level: "中風險"
+                }
+            };
+
+            const data = exampleData.data;
+            const analysis = exampleData.analysis;
+
+            // 確定風險等級樣式
+            let riskClass = 'medium';
+            let riskIcon = '';
+            if (analysis.level.includes('低')) {
+                riskClass = 'low';
+                riskIcon = '<svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>';
+            } else if (analysis.level.includes('高') || analysis.level.includes('極高')) {
+                riskClass = 'high';
+                riskIcon = '<svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.5L19.5 19h-15L12 5.5zM11 10v4h2v-4h-2zm0 5v2h2v-2h-2z"/></svg>';
+            } else {
+                riskClass = 'medium';
+                riskIcon = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
+            }
+
+            // 鏈名稱映射
+            const chainNameMap = {
+                'ETHEREUM': 'ETHEREUM',
+                'BSC': 'BSC',
+                'SOLANA': 'SOL',
+                'POLYGON': 'POLYGON',
+                'ARBITRUM': 'ARBITRUM',
+                'OPTIMISM': 'OPTIMISM',
+                'BASE': 'BASE',
+                'AVALANCHE': 'AVALANCHE'
+            };
+            
+            const rawChain = (exampleData.chain || 'UNKNOWN').toUpperCase();
+            const networkName = chainNameMap[rawChain] || rawChain;
+
+            // 構建HTML
+            const resultsHTML = `
+                <div class="result-header">
+                    <div class="result-page-title">[ RISK ANALYSIS REPORT ]</div>
+                    <div class="result-network-title">${networkName} MAINNET</div>
+                </div>
+
+                <div class="result-risk-container ${riskClass}">
+                    <div class="result-risk-label">總體風險評級</div>
+                    <div class="result-risk-level">
+                        <span class="result-risk-icon">${riskIcon}</span>
+                        ${analysis.level}
+                    </div>
+                    <div class="result-risk-score">風險分數: ${analysis.score}/7</div>
+                </div>
+
+                <div class="result-metrics-grid">
+                    <div class="result-metric-card">
+                        <div class="result-metric-header">
+                            <div class="result-metric-label">LIQUIDITY</div>
+                            <div class="result-metric-live">LIVE</div>
+                        </div>
+                        <div class="result-metric-value">$${formatNumber(data.liquidity)}</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="result-metric-card">
+                        <div class="result-metric-header">
+                            <div class="result-metric-label">MARKET CAP</div>
+                            <div class="result-metric-live">LIVE</div>
+                        </div>
+                        <div class="result-metric-value">$${formatNumber(data.marketcap)}</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="result-metric-card">
+                        <div class="result-metric-header">
+                            <div class="result-metric-label">24H PRICE Δ</div>
+                            <div class="result-metric-live">LIVE</div>
+                        </div>
+                        <div class="result-metric-value">${data.price_change_24h >= 0 ? '+' : ''}${data.price_change_24h.toFixed(2)}%</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="result-metric-card">
+                        <div class="result-metric-header">
+                            <div class="result-metric-label">VOLUME Δ</div>
+                            <div class="result-metric-live">LIVE</div>
+                        </div>
+                        <div class="result-metric-value">${data.volume_change >= 0 ? '+' : ''}${data.volume_change.toFixed(2)}%</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="result-metric-card">
+                        <div class="result-metric-header">
+                            <div class="result-metric-label">TOP 10 HOLDERS</div>
+                            <div class="result-metric-live">LIVE</div>
+                        </div>
+                        <div class="result-metric-value">${data.top10_pct !== null ? data.top10_pct.toFixed(2) + '%' : 'N/A'}</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="result-metric-card">
+                        <div class="result-metric-header">
+                            <div class="result-metric-label">5% THRESHOLD</div>
+                            <div class="result-metric-live">CALC</div>
+                        </div>
+                        <div class="result-metric-value">$${formatNumber(analysis.threshold)}</div>
+                        <div class="result-metric-bar">
+                            <div class="result-metric-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-threats-section">
+                    <div class="result-threats-title">[ THREAT DETECTION ]</div>
+                    
+                    <div class="result-threat-item ${analysis.wash ? 'danger' : 'success'}">
+                        <div class="result-threat-icon">
+                            ${analysis.wash ? ICONS.danger : ICONS.check}
+                        </div>
+                        <div class="result-threat-text">
+                            ${analysis.wash ? 'WASH TRADING DETECTED' : 'NO WASH TRADING'}
+                        </div>
+                    </div>
+                    
+                    <div class="result-threat-item ${analysis.lpi ? 'danger' : 'success'}">
+                        <div class="result-threat-icon">
+                            ${analysis.lpi ? ICONS.warning : ICONS.check}
+                        </div>
+                        <div class="result-threat-text">
+                            ${analysis.lpi ? 'LPI RISK DETECTED' : 'NO LPI RISK'}
+                        </div>
+                    </div>
+                    
+                    <div class="result-threat-item ${['high', 'severe'].includes(analysis.conc_tier) ? 'warning' : 'success'}">
+                        <div class="result-threat-icon">
+                            ${['high', 'severe'].includes(analysis.conc_tier) ? ICONS.alert : ICONS.check}
+                        </div>
+                        <div class="result-threat-text">
+                            ${analysis.conc_text || '持倉集中度正常'}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('resultsContent').innerHTML = resultsHTML;
         }
 
         // ===== 關閉結果 =====
