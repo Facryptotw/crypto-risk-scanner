@@ -1659,6 +1659,87 @@
             }
         }
     
+    
+        /* 結果卡片 - 完整版本 */
+        .result-metric-card {
+            position: relative;
+        }
+
+        .result-metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .result-metric-live {
+            font-size: 10px;
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1px;
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+        }
+
+        .result-metric-bar {
+            height: 4px;
+            background: rgba(0, 0, 0, 0.5);
+            margin-top: 12px;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .result-metric-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+            width: 0%;
+            animation: barFill 2s ease-out forwards;
+            box-shadow: 0 0 10px var(--neon-cyan);
+            position: relative;
+        }
+
+        @keyframes barFill {
+            to { width: 85%; }
+        }
+
+        .result-metric-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 30px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4));
+            animation: shimmer 2s infinite;
+        }
+
+        /* 風險等級圖標 */
+        .result-risk-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            margin-right: 15px;
+            vertical-align: middle;
+        }
+
+        .result-risk-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: currentColor;
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        .result-risk-level {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
     </style>
 </head>
 <body>
@@ -1886,64 +1967,8 @@
     <div class="results-overlay" id="results">
         <button class="result-close-btn" onclick="closeResults()">✕ 關閉</button>
         
-        <div class="results-container">
-            <div class="result-header">
-                <div class="result-page-title">[ RISK ANALYSIS REPORT ]</div>
-                <div class="result-network-title">ETHEREUM MAINNET</div>
-            </div>
-
-            <div class="result-risk-container">
-                <div class="result-risk-label">總體風險評級</div>
-                <div class="result-risk-level high">⚠️ 高風險</div>
-                <div class="result-risk-score">風險分數: 78/100</div>
-            </div>
-
-            <div class="result-metrics-grid">
-                <div class="result-metric-card">
-                    <div class="result-metric-label">持有者集中度</div>
-                    <div class="result-metric-value">85%</div>
-                </div>
-                <div class="result-metric-card">
-                    <div class="result-metric-label">流動性深度</div>
-                    <div class="result-metric-value">$125K</div>
-                </div>
-                <div class="result-metric-card">
-                    <div class="result-metric-label">交易操縱指數</div>
-                    <div class="result-metric-value">7.2/10</div>
-                </div>
-                <div class="result-metric-card">
-                    <div class="result-metric-label">合約安全性</div>
-                    <div class="result-metric-value">中等</div>
-                </div>
-            </div>
-
-            <div class="result-threats-section">
-                <div class="result-threats-title">[ 檢測到的威脅 ]</div>
-                <div class="result-threat-item danger">
-                    <div class="result-threat-icon">
-                        <svg viewBox="0 0 24 24"><path d="M15.73 3H8.27L3 8.27v7.46L8.27 21h7.46L21 15.73V8.27L15.73 3zM12 17.3c-.72 0-1.3-.58-1.3-1.3s.58-1.3 1.3-1.3 1.3.58 1.3 1.3-.58 1.3-1.3 1.3zm1-4.3h-2V7h2v6z"/></svg>
-                    </div>
-                    <div class="result-threat-text">檢測到 Wash Trading 疑似行為，虛假交易量比例約 65%</div>
-                </div>
-                <div class="result-threat-item warning">
-                    <div class="result-threat-icon">
-                        <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.5L19.5 19h-15L12 5.5zM11 10v4h2v-4h-2zm0 5v2h2v-2h-2z"/></svg>
-                    </div>
-                    <div class="result-threat-text">前 10 大持有者控制 85% 代幣供應量，存在高度操縱風險</div>
-                </div>
-                <div class="result-threat-item danger">
-                    <div class="result-threat-icon">
-                        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-                    </div>
-                    <div class="result-threat-text">流動性未鎖定，開發者可隨時移除流動性（Rug Pull 風險）</div>
-                </div>
-                <div class="result-threat-item warning">
-                    <div class="result-threat-icon">
-                        <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/></svg>
-                    </div>
-                    <div class="result-threat-text">合約存在隱藏的 Mint 功能，可能導致無限增發</div>
-                </div>
-            </div>
+        <div class="results-container" id="resultsContent">
+            <!-- 結果將由 JavaScript 動態生成 -->
         </div>
     </div>
 
