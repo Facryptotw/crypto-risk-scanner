@@ -1499,7 +1499,37 @@
         }
 
         /* ===== 響應式設計 ===== */
+        
+        /* 平板和小桌面 (768px - 1024px) */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 25px;
+            }
+
+            .scanner-section {
+                padding: 50px 35px;
+            }
+
+            .decrypt-title {
+                font-size: 28px;
+            }
+
+            .result-page-title {
+                font-size: 38px;
+            }
+        }
+
+        /* 手機橫向和小平板 (481px - 768px) */
         @media (max-width: 768px) {
+            body::before {
+                background-size: 30px 30px;
+            }
+
             .boot-logo-container,
             .intro-logo-container,
             .header-logo-container {
@@ -1514,32 +1544,44 @@
             }
 
             .header-avatar {
-                width: 80px;
-                height: 80px;
+                width: 70px;
+                height: 70px;
             }
 
             .boot-logo,
             .intro-logo-main {
-                font-size: 42px;
+                font-size: 38px;
+                letter-spacing: 4px;
             }
 
             .logo {
-                font-size: 28px;
+                font-size: 24px;
                 letter-spacing: 2px;
+                text-align: center;
             }
 
             .scanner-title {
-                font-size: 28px;
+                font-size: 26px;
                 letter-spacing: 3px;
             }
 
             .scanner-section {
-                padding: 40px 30px;
+                padding: 40px 25px;
+            }
+
+            .input-container {
+                gap: 15px;
+            }
+
+            .input-wrapper input,
+            .input-wrapper select {
+                padding: 16px 20px;
+                font-size: 15px;
             }
 
             .button-container {
                 grid-template-columns: 1fr;
-                gap: 20px;
+                gap: 18px;
             }
 
             .scan-button::before,
@@ -1550,6 +1592,27 @@
 
             .features-grid {
                 grid-template-columns: 1fr;
+                gap: 25px;
+            }
+
+            .feature-card {
+                padding: 25px;
+            }
+
+            .card-title {
+                font-size: 26px;
+            }
+
+            .card-subtitle {
+                font-size: 15px;
+            }
+
+            .card-description {
+                font-size: 15px;
+            }
+
+            .card-points li {
+                font-size: 15px;
             }
 
             .result-page-title {
@@ -1560,8 +1623,376 @@
                 font-size: 36px;
             }
 
+            .result-stats-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .result-stat-card {
+                padding: 20px;
+            }
+
+            .result-threats-list {
+                gap: 18px;
+            }
+
             .progress-container {
                 width: 90%;
+            }
+
+            .decrypt-title {
+                font-size: 24px;
+                margin-bottom: 35px;
+            }
+
+            .decrypt-status {
+                font-size: 18px;
+            }
+
+            .data-blocks {
+                max-width: 95%;
+            }
+
+            .analyzing-text {
+                font-size: 20px;
+            }
+
+            .intro-subtitle {
+                font-size: 22px;
+            }
+
+            .intro-tagline {
+                font-size: 16px;
+            }
+
+            .intro-prompt {
+                font-size: 15px;
+                padding: 12px 28px;
+            }
+        }
+
+        /* 手機直向 (320px - 480px) */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .boot-avatar,
+            .intro-avatar {
+                width: 80px;
+                height: 80px;
+            }
+
+            .header-avatar {
+                width: 60px;
+                height: 60px;
+            }
+
+            .boot-logo,
+            .intro-logo-main {
+                font-size: 32px;
+                letter-spacing: 3px;
+            }
+
+            .logo {
+                font-size: 18px;
+                letter-spacing: 1.5px;
+            }
+
+            .scanner-title {
+                font-size: 22px;
+                letter-spacing: 2px;
+            }
+
+            .scanner-section {
+                padding: 30px 20px;
+            }
+
+            .input-wrapper input,
+            .input-wrapper select {
+                padding: 14px 18px;
+                font-size: 14px;
+            }
+
+            .scan-button::before,
+            .reset-button::before {
+                font-size: 14px;
+                padding: 16px 0;
+            }
+
+            .feature-card {
+                padding: 20px;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .card-id {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .card-status {
+                font-size: 11px;
+                padding: 6px 12px;
+            }
+
+            .card-title {
+                font-size: 22px;
+            }
+
+            .card-subtitle {
+                font-size: 13px;
+            }
+
+            .card-condition {
+                font-size: 13px;
+                padding: 10px 15px;
+            }
+
+            .card-description {
+                font-size: 14px;
+            }
+
+            .card-points li {
+                font-size: 14px;
+                padding-left: 22px;
+            }
+
+            .card-points li::before {
+                width: 6px;
+                height: 6px;
+                left: 6px;
+            }
+
+            .data-label {
+                font-size: 11px;
+            }
+
+            .result-page-title {
+                font-size: 26px;
+            }
+
+            .result-risk-level {
+                font-size: 32px;
+            }
+
+            .result-timestamp {
+                font-size: 13px;
+            }
+
+            .result-close-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .result-stat-value {
+                font-size: 26px;
+            }
+
+            .result-stat-label {
+                font-size: 13px;
+            }
+
+            .result-threat-item {
+                padding: 15px;
+                gap: 12px;
+            }
+
+            .result-threat-icon {
+                font-size: 22px;
+            }
+
+            .result-threat-text {
+                font-size: 14px;
+            }
+
+            .decrypt-title {
+                font-size: 20px;
+                margin-bottom: 30px;
+            }
+
+            .decrypt-status {
+                font-size: 16px;
+                letter-spacing: 1px;
+            }
+
+            .decrypt-percentage {
+                font-size: 16px;
+            }
+
+            .data-blocks {
+                max-width: 100%;
+                padding: 15px;
+                font-size: 11px;
+            }
+
+            .analyzing-spinner {
+                width: 60px;
+                height: 60px;
+            }
+
+            .analyzing-text {
+                font-size: 18px;
+                letter-spacing: 2px;
+            }
+
+            .intro-subtitle {
+                font-size: 18px;
+                letter-spacing: 3px;
+            }
+
+            .intro-tagline {
+                font-size: 14px;
+            }
+
+            .intro-prompt {
+                font-size: 13px;
+                padding: 10px 24px;
+            }
+
+            .progress-container {
+                width: 95%;
+            }
+
+            .boot-text div {
+                font-size: 13px;
+            }
+        }
+
+        /* 超小手機 (< 360px) */
+        @media (max-width: 360px) {
+            .boot-avatar,
+            .intro-avatar {
+                width: 70px;
+                height: 70px;
+            }
+
+            .header-avatar {
+                width: 50px;
+                height: 50px;
+            }
+
+            .boot-logo,
+            .intro-logo-main {
+                font-size: 28px;
+                letter-spacing: 2px;
+            }
+
+            .logo {
+                font-size: 16px;
+                letter-spacing: 1px;
+            }
+
+            .scanner-title {
+                font-size: 20px;
+            }
+
+            .scanner-section {
+                padding: 25px 15px;
+            }
+
+            .feature-card {
+                padding: 18px;
+            }
+
+            .card-title {
+                font-size: 20px;
+            }
+
+            .result-page-title {
+                font-size: 24px;
+            }
+
+            .result-risk-level {
+                font-size: 28px;
+            }
+
+            .decrypt-title {
+                font-size: 18px;
+            }
+
+            .intro-subtitle {
+                font-size: 16px;
+            }
+        }
+
+        /* 橫屏優化 */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .boot-screen,
+            .intro-hall {
+                padding: 20px;
+            }
+
+            .boot-logo-container,
+            .intro-logo-container {
+                margin-bottom: 20px;
+            }
+
+            .boot-avatar,
+            .intro-avatar {
+                width: 70px;
+                height: 70px;
+            }
+
+            .boot-logo,
+            .intro-logo-main {
+                font-size: 32px;
+            }
+
+            .intro-subtitle {
+                font-size: 18px;
+                margin: 10px 0;
+            }
+
+            .intro-tagline {
+                font-size: 14px;
+                margin-bottom: 15px;
+            }
+
+            .scanner-section {
+                padding: 30px 25px;
+            }
+
+            .feature-card {
+                padding: 20px;
+            }
+        }
+
+        /* 觸控設備優化 */
+        @media (hover: none) and (pointer: coarse) {
+            .scan-button,
+            .reset-button,
+            .result-close-btn,
+            .intro-prompt {
+                min-height: 48px; /* 增加觸控目標大小 */
+            }
+
+            .input-wrapper input,
+            .input-wrapper select {
+                font-size: 16px; /* 防止 iOS 自動縮放 */
+            }
+
+            /* 移除 hover 效果，改用 active 狀態 */
+            .feature-card:hover {
+                transform: none;
+            }
+
+            .feature-card:active {
+                transform: scale(0.98);
+            }
+        }
+
+        /* 高解析度螢幕優化 */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .particle,
+            .intro-particle {
+                width: 1px;
+                height: 1px;
             }
         }
     </style>
@@ -1576,7 +2007,7 @@
     <!-- 啟動畫面 -->
     <div class="boot-screen">
         <div class="boot-logo-container">
-            <img src="logo.png" alt="Avatar" class="boot-avatar">
+            <img src="templates/logo.png" alt="Avatar" class="boot-avatar">
             <div class="boot-logo">FACRYPTO</div>
         </div>
         <div class="boot-text"></div>
@@ -1592,7 +2023,7 @@
         <div class="intro-particles" id="introParticles"></div>
         <div class="intro-content">
             <div class="intro-logo-container">
-                <img src="logo.png" alt="Avatar" class="intro-avatar">
+                <img src="templates/logo.png" alt="Avatar" class="intro-avatar">
                 <div class="intro-logo-main">FACRYPTO</div>
             </div>
             <div class="intro-subtitle">RISK PROTOCOL</div>
@@ -1606,8 +2037,8 @@
         <!-- 頭部 Logo 區域 -->
         <div class="header">
             <div class="header-logo-container">
-                <img src="logo.png" alt="Avatar" class="header-avatar">
-                <div class="logo">FACRYPTO</div>
+                <img src="templates/logo.png" alt="Avatar" class="header-avatar">
+                <div class="logo">FACRYPTO RISK PROTOCOL</div>
             </div>
         </div>
 
